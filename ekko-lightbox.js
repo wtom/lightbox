@@ -259,8 +259,10 @@ const Lightbox = (($) => {
 				type = 'vimeo';
 			if(!type && this._getInstagramId(src))
 				type = 'instagram';
+			if (!type && this._isInline(src))
+				type = 'inline';
 
-			if(!type || ['image', 'youtube', 'vimeo', 'instagram', 'video', 'url'].indexOf(type) < 0)
+			if(!type || ['image', 'youtube', 'vimeo', 'instagram', 'video', 'url', 'inline'].indexOf(type) < 0)
 				type = 'url';
 
 			return type;
@@ -268,6 +270,9 @@ const Lightbox = (($) => {
 
 		_isImage(string) {
 			return string && string.match(/(^data:image\/.*,)|(\.(jp(e|g|eg)|gif|png|bmp|webp|svg)((\?|#).*)?$)/i)
+		}
+		_isInline(string) {
+			return string && string.match(/^#.*$/i)
 		}
 
 		_containerToUse() {
@@ -300,7 +305,7 @@ const Lightbox = (($) => {
 			let currentRemote = this._$element.attr('data-remote') || this._$element.attr('href')
 			let currentType = this._detectRemoteType(currentRemote, this._$element.attr('data-type') || false)
 
-			if(['image', 'youtube', 'vimeo', 'instagram', 'video', 'url'].indexOf(currentType) < 0)
+			if(['image', 'youtube', 'vimeo', 'instagram', 'video', 'url', 'inline'].indexOf(currentType) < 0)
 				return this._error(this._config.strings.type)
 
 			switch(currentType) {
@@ -319,6 +324,9 @@ const Lightbox = (($) => {
 					break;
 				case 'video':
 					this._showHtml5Video(currentRemote, $toUse);
+					break;
+				case 'inline':
+					this._showInlineContent(currentRemote, $toUse);
 					break;
 				default: // url
 					this._loadRemoteContent(currentRemote, $toUse);
@@ -459,6 +467,20 @@ const Lightbox = (($) => {
 			if (this._$modalArrows)
 				this._$modalArrows.css('display', 'none'); //hide the arrows when showing video
 			this._toggleLoading(false);
+			return this;
+		}
+
+		_showInlineContent(id, $containerForElement) {
+			let width = this._$element.data('width') || 560;
+			let height = this._$element.data('height') || 560;
+
+			let disableExternalCheck = this._$element.data('disableExternalCheck') || false;
+			this._toggleLoading(false);
+
+			$containerForElement.html($(id).html());
+			this._config.onContentLoaded.call(this);
+
+			this._resize(width, height);
 			return this;
 		}
 
